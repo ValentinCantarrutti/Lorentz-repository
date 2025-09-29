@@ -19,16 +19,20 @@ export class Game extends Scene {
         const centroY = this.cameras.main.height / 2;
         this.add.image(centroX, centroY, "background").setOrigin(0.5).setDepth(0).setScale(2);
         
-        // Pasamos 'this' (la escena actual) al constructor de la paleta
-        this.paletas = new ClassPaletas(this); 
+        // Crear jugador 1 (controlado con flechas) con brillo azul
+        this.player1 = new ClassPaletas(this, 200, 300, 170, 35, 0x0000ff, 'player1'); 
         
+        // Crear jugador 2 (controlado con WASD) con brillo rojo
+        this.player2 = new ClassPaletas(this, 824, 300, 170, 35, 0xff0000, 'player2');
+
         this.input.keyboard.on('keydown-R', () => {
             this.scene.restart();
         });
     }
 
      update(time, delta) {
-        // update game objects
-        this.paletas.update(time, delta); // la plataforma se mueve
+        // Actualizar ambos jugadores
+        this.player1.update(time, delta);
+        this.player2.update(time, delta);
     }
 }
