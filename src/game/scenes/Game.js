@@ -19,12 +19,17 @@ export class Game extends Scene
     {
         
         this.add.image(512, 384, 'background');
-        this.add.image(512, 350, 'logo').setDepth(100);
-        this.add.text(512, 490, 'Make something fun!\nand share it with us:\nsupport@phaser.io', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setOrigin(0.5).setDepth(100);
+       
+        this.paletas = new ClassPaletas(this); // se crea el rectangulo como clase externa
         
+    }
+
+     update() {
+    // update game objects
+    if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey("R"))) {
+      this.scene.restart();
+    } //creada la tecla R
+
+    this.paletas.update(); // la plataforma se mueve hacia los lados
     }
 }
