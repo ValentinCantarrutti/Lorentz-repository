@@ -1,35 +1,34 @@
-import { Scene } from 'phaser';
+import { Scene, Input } from 'phaser';
+import ClassPaletas from '../Objects/ClassPaletas.js';
 
-export class Game extends Scene
-{
-    constructor ()
-    {
-        super('Game');
+export class Game extends Scene {
+    constructor() {
+        super({ key: 'Game' });
     }
 
     preload ()
     {
         this.load.setPath('assets');
-        
         this.load.image('background', 'bg.png');
-        this.load.image('logo', 'logo.png');
+        // this.load.image('logo', 'logo.png'); // logo no se usa
     }
 
     create ()
     {
+        const centroX = this.cameras.main.width / 2;
+        const centroY = this.cameras.main.height / 2;
+        this.add.image(centroX, centroY, "background").setOrigin(0.5).setDepth(0).setScale(2);
         
-        this.add.image(512, 384, 'background');
-       
-        this.paletas = new ClassPaletas(this); // se crea el rectangulo como clase externa
+        // Pasamos 'this' (la escena actual) al constructor de la paleta
+        this.paletas = new ClassPaletas(this); 
         
+        this.input.keyboard.on('keydown-R', () => {
+            this.scene.restart();
+        });
     }
 
-     update() {
-    // update game objects
-    if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey("R"))) {
-      this.scene.restart();
-    } //creada la tecla R
-
-    this.paletas.update(); // la plataforma se mueve hacia los lados
+     update(time, delta) {
+        // update game objects
+        this.paletas.update(time, delta); // la plataforma se mueve
     }
 }
