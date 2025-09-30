@@ -12,9 +12,9 @@ export default class Ball extends Phaser.GameObjects.Arc {
     this.body.allowGravity = false;
 
     // Añadir efecto de brillo
-    if (this.scene.sys.game.config.renderType === Phaser.WEBGL) {
-        this.postFX.addGlow(0xffffff, 2, 0, false, 0.1, 12);
-    }
+   // if (this.scene.sys.game.config.renderType === Phaser.WEBGL) {
+   //     this.postFX.addGlow(0xffffff, 2, 0, false, 0.1, 12);
+   //}
   }
 
   launch(initialSpeed = 500) {

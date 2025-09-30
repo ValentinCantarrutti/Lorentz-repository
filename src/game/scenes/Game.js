@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import ClassPaletas from '../Objects/ClassPaletas.js';
 import Ball from '../Objects/Ball.js';
 import BlockRow from '../Objects/BlockRow.js'; 
+import Energy from '../Objects/Energy.js';
 
 export class Game extends Phaser.Scene {
     constructor() {
@@ -45,7 +46,9 @@ export class Game extends Phaser.Scene {
         color: 0xffffff
         });
 
-  this.blockRow.enableCollision(this.ball);
+    this.blockRow.enableCollision(this.ball);
+
+    this.energy = new Energy(this, this.ball, [this.player1.hitboxGroup, this.player2.hitboxGroup]);
 
         this.input.keyboard.on('keydown-R', () => {
             this.scene.restart();
@@ -74,6 +77,10 @@ export class Game extends Phaser.Scene {
 
         ball.body.setVelocity(newVx, newVy);
         ball.clampSpeed(900); // Limitar la velocidad máxima por si acaso
+
+        if (this.energy) {
+         this.energy.registerHit();
+        }
     }
 
      update(time, delta) {
@@ -85,6 +92,7 @@ export class Game extends Phaser.Scene {
             this.scene.restart();
         }
 
-        
     }
+
+    
 }
