@@ -7,25 +7,31 @@ export default class ClassPaletas {
         // Propiedades del jugador
         this.playerSpeed = 325;
         this.playerRotationSpeed = 3; // Grados por segundo
+        this.maxRotationAngle = 55; // Límite de rotación en grados
 
         // Crear el jugador visual (el rectángulo) con los nuevos parámetros
-        this.player = this.scene.add.rectangle(x, y, width, height, color);
-        this.initialColor = color; // Guardar el color inicial para resetearlo
+        this.player = this.scene.add.rectangle(x, y, width, height, 0xffffff); // Paleta siempre blanca
+        this.scene.physics.add.existing(this.player);
+        this.player.body.setImmovable(true);
+        this.player.body.setCollideWorldBounds(true);
+        this.initialColor = 0xffffff; // Guardar el color inicial para resetearlo
 
+       
         // Crear los círculos de la hitbox
         this.hitboxGroup = this.scene.physics.add.group();
-        this.hitboxRadius = height / 2; // El radio se ajusta a la mitad de la altura de la paleta
+        this.hitboxRadius = width / 2; // El radio se ajusta a la mitad del ANCHO de la paleta
 
         // Almacenar las hitboxes y sus desplazamientos
         this.hitboxes = [];
         this.hitboxOffsets = [];
 
-        // Calcular dinámicamente el número y la posición de las hitboxes según el ancho
-        const numHitboxes = Math.max(2, Math.floor(width / (this.hitboxRadius * 2)));
-        const halfWidth = width / 2 - this.hitboxRadius;
+        // Calcular dinámicamente el número y la posición de las hitboxes según el ALTO
+        const densityFactor = 1.5; // Aumenta la densidad (más hitboxes por unidad de alto)
+        const numHitboxes = Math.max(2, Math.floor(height / (this.hitboxRadius * 2 / densityFactor)));
+        const halfHeight = height / 2 - this.hitboxRadius;
 
         for (let i = 0; i < numHitboxes; i++) {
-            const offset = (numHitboxes === 1) ? 0 : -halfWidth + (i / (numHitboxes - 1)) * (halfWidth * 2);
+            const offset = (numHitboxes === 1) ? 0 : -halfHeight + (i / (numHitboxes - 1)) * (halfHeight * 2);
             this.hitboxOffsets.push(offset);
 
             const hitbox = this.scene.add.circle(0, 0, this.hitboxRadius, 0xff0000);
@@ -38,23 +44,17 @@ export default class ClassPaletas {
         this.hitboxGroup.children.each(child => {
             child.body.setCircle(this.hitboxRadius);
             child.body.setImmovable(true);
+            child.body.setCollideWorldBounds(true); // <-- Add this line
         });
         
-        // Crear un objeto de ejemplo con el que la hitbox chocará
-        let obstacle = this.scene.add.rectangle(600, 300, 50, 50, 0xcccccc);
-        this.scene.physics.add.existing(obstacle);
-        obstacle.body.setImmovable(true);
-
-        // Detectar colisiones entre la hitbox y el obstáculo
-        this.scene.physics.add.collider(this.hitboxGroup, obstacle, () => {
-            console.log('¡Colisión detectada!');
-            this.player.fillColor = 0xffff00; // Cambiar color al colisionar
-        });
+        // --- SECCIÓN ELIMINADA ---
+        // Ya no se necesita el obstáculo de ejemplo ni su collider.
+        // La colisión con la pelota se manejará en Game.js
 
         // Configurar los controles del teclado según el tipo de jugador
-        if (playerType === 'player1') {
+        if (playerType === 'player2') {
             this.cursors = this.scene.input.keyboard.createCursorKeys();
-        } else if (playerType === 'player2') {
+        } else if (playerType === 'player1') {
             this.cursors = this.scene.input.keyboard.addKeys({
                 up: 'W',
                 down: 'S',
@@ -65,24 +65,25 @@ export default class ClassPaletas {
     }
 
     update(time, delta) {
-        // Resetear el color al color inicial
-        this.player.fillColor = this.initialColor;
+        // Resetear el color al color inicial (no necesario si se usa glow)
+        // this.player.fillColor = this.initialColor;
 
-        // Movimiento del jugador
+        // Movimiento del jugador: Rotación con izquierda/derecha
         if (this.cursors.left.isDown) {
             this.player.angle -= this.playerRotationSpeed;
         } else if (this.cursors.right.isDown) {
             this.player.angle += this.playerRotationSpeed;
         }
 
+        // Limitar la rotación de la paleta
+        this.player.angle = Phaser.Math.Clamp(this.player.angle, -this.maxRotationAngle, this.maxRotationAngle);
+
+        // Movimiento del jugador: Desplazamiento vertical con arriba/abajo
+        const speed = this.playerSpeed * (delta / 1000);
         if (this.cursors.up.isDown) {
-            const speed = this.playerSpeed * (delta / 1000);
-            this.player.x += Math.cos(Phaser.Math.DegToRad(this.player.angle)) * speed;
-            this.player.y += Math.sin(Phaser.Math.DegToRad(this.player.angle)) * speed;
+            this.player.y -= speed;
         } else if (this.cursors.down.isDown) {
-            const speed = this.playerSpeed * (delta / 1000);
-            this.player.x -= Math.cos(Phaser.Math.DegToRad(this.player.angle)) * speed;
-            this.player.y -= Math.sin(Phaser.Math.DegToRad(this.player.angle)) * speed;
+            this.player.y += speed;
         }
 
         // Actualizar la posición de los círculos de la hitbox para que sigan a la paleta
@@ -94,17 +95,18 @@ export default class ClassPaletas {
             const hitbox = this.hitboxes[i];
             const offset = this.hitboxOffsets[i];
 
-            // Calcular la posición de la hitbox relativa al centro y rotación de la paleta
-            const newX = this.player.x + offset * cosAngle;
-            const newY = this.player.y + offset * sinAngle;
+            // Calcular la posición de la hitbox relativa al centro y rotación de la paleta (a lo largo del eje Y local)
+            const newX = this.player.x - offset * sinAngle;
+            const newY = this.player.y + offset * cosAngle;
             
             hitbox.setPosition(newX, newY);
         }
 
         // Sincronizar los cuerpos de física con los game objects
         this.hitboxGroup.children.each(child => {
-            child.body.x = child.x - this.hitboxRadius;
-            child.body.y = child.y - this.hitboxRadius;
+            if (child.body && child.body.setPosition) {
+                child.body.setPosition(child.x - this.hitboxRadius, child.y - this.hitboxRadius);
+            }
         });
     }
 }
